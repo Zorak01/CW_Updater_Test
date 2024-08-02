@@ -3,7 +3,7 @@ bl_info = {
     "author": "01 Studio",
     "description": "Batch export as GLTF",
     "blender": (3, 0, 0),
-    "version": (1, 7, 8),
+    "version": (1, 7, 9),
     "location": "Cubio panel",
     "warning": "",
     "category": "Import-Export"

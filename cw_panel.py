@@ -6,7 +6,7 @@ from .external.ZorakExtensions.prefab_manager import PREFABMANAGER_OT_Popover  #
 class CWS_GLTF_PT_Panel(bpy.types.Panel):
     bl_space_type = "VIEW_3D"
     bl_region_type = "UI"
-    bl_label = "Cubio Exporter v1.78"
+    bl_label = "Cubio Exporter v1.79"
     bl_category = "Cubio"
 
     def draw(self, context):
