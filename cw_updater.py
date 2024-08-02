@@ -4,6 +4,7 @@ import zipfile
 import os
 import shutil
 from pathlib import Path
+from . import __init__ as addon_main  # Import the main addon module to access bl_info
 
 # Define the URL of your GitHub repository and the path to the zip file
 GITHUB_REPO_URL = "https://github.com/Zorak01/CW_Updater_Test"
@@ -12,7 +13,7 @@ ADDON_DIR = Path(__file__).parent
 
 def check_for_updates():
     # Get the current version of the addon from bl_info
-    current_version = bpy.context.preferences.addons[__package__].bl_info['version']
+    current_version = addon_main.bl_info['version']
     latest_version = get_latest_version()
 
     if current_version < latest_version:
