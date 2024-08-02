@@ -16,15 +16,14 @@ from .cw_op import *
 from .cw_folder_op import *
 from .cw_export import *
 from .cw_utils import *
+from .cw_updater import check_for_updates  # Importing only the necessary functions from cw_updater
 from .external.ZorakExtensions.color_harmony import *
 from .external.ZorakExtensions.prefab_manager import *
-
 from .external.VertexColorTools.init import register as reg, unregister as unreg
 
 # When bpy is already in local, we know this is not the initial import...
 # Should reload stuff
 if "bpy" in locals():
-    # ...so we need to reload our submodule(s) using importlib
     import importlib
     if "cw_panel" in locals():
         importlib.reload(cw_panel)
@@ -36,6 +35,8 @@ if "bpy" in locals():
         importlib.reload(cw_export)
     if "cw_utils" in locals():
         importlib.reload(cw_utils)
+    if "cw_updater" in locals():
+        importlib.reload(cw_updater)
     if "external.ZorakExtensions.color_harmony" in locals():
         importlib.reload(color_harmony)
     if "external.ZorakExtensions.prefab_manager" in locals():
@@ -55,92 +56,23 @@ class ColorPalette(bpy.types.PropertyGroup):
     colors: bpy.props.CollectionProperty(type=ColorSlot)
     color_index: bpy.props.IntProperty()
 
-# Path to the folder containing your .glb files
-glb_path = os.path.expanduser("~\\AppData\\LocalLow\\01 Studio\\CitywarsSavage\\glbFiles")
+# Define the Update Operator
+class CUBIO_OT_UpdateAddon(bpy.types.Operator):
+    bl_idname = "cubio.update_addon"
+    bl_label = "Update Cubio Addon"
 
-# Function to create color previews
-def create_color_previews():
-    for i in range(5):  # Assuming a maximum of 5 color previews
-        setattr(bpy.types.Scene, f"color_preview_{i}", FloatVectorProperty(
-            name=f"Color Preview {i+1}",
-            subtype='COLOR',
-            min=0.0, max=1.0,
-            default=(0.5, 0.5, 0.5)
-        ))
+    def execute(self, context):
+        check_for_updates()  # Call the update function from cw_updater
+        return {'FINISHED'}
 
-# Function to remove color previews
-def remove_color_previews():
-    for i in range(5):
-        delattr(bpy.types.Scene, f"color_preview_{i}")
+# Define the Addon Preferences Panel with Update Button
+class CUBIO_PT_AddonPreferences(bpy.types.AddonPreferences):
+    bl_idname = __name__
 
-def on_prefab_display_type_update(self, context):
-    update_display_type(context.scene.prefab_display_type)
+    def draw(self, context):
+        layout = self.layout
+        layout.operator("cubio.update_addon", text="Check for Update")
 
-def on_show_instancer_update(self, context):
-    toggle_instancer_visibility(context.scene.show_instancer)
-
-bpy.types.Scene.cw_export_folder = StringProperty(
-    name="Export folder", 
-    subtype="DIR_PATH", 
-    description="Directory to export the glb files into"
-)
-
-bpy.types.Scene.cw_center_transform = BoolProperty(
-    name="Center transform",
-    default=True,
-    description="Set the pivot point of the object to the center"
-)
-
-bpy.types.Scene.cw_vertex_alpha_value = FloatProperty(
-    name="Vertex Alpha Value",
-    default=1, 
-    min=0, 
-    max=1
-)
-
-# Adding new properties for player id
-bpy.types.Scene.CW_PlayerId = IntProperty(
-    name="Cubio Player Id",
-    description="Player Id for Cubio",
-    default=0
-)
-
-# Adding new properties for port, and address
-bpy.types.Scene.CW_Port = IntProperty(
-    name="Cubio Port",
-    description="Port for Cubio",
-    default=0
-)
-
-bpy.types.Scene.CW_Address = StringProperty(
-    name="Cubio Address",
-    description="Address for Cubio",
-    default="")
-
-bpy.types.Scene.prefab_display_type = EnumProperty(
-    name="Display As",
-    description="Display type for prefab objects",
-    items=[
-        ('BOUNDS', "Bounds", "Display the bounds of the object"),
-        ('WIRE', "Wire", "Display the object as a wireframe"),
-        ('TEXTURED', "Vertex Color", "Display the object with textures (if textures are enabled in the viewport)")
-    ],
-    default='TEXTURED',  # Default to "Vertex Color"
-    update=on_prefab_display_type_update
-)
-
-bpy.types.Scene.show_instancer = BoolProperty(
-    name="Show Instancer",
-    description="Toggle the visibility of the instancer for the viewport",
-    default=True,  # Default to True
-    update=on_show_instancer_update
-)
-
-bpy.types.Scene.prefab_manager_list_index = IntProperty(
-    name="Prefab Manager List Index",
-    default=0
-)
-# Remember to register new operators. They must be imported too
 classes = (
     CWS_GLTF_PT_Panel,
     CWS_PALETTE_PT_SubPanel,
@@ -171,27 +103,19 @@ classes = (
     PREFABMANAGER_OT_RemoveInstances,
     PREFABMANAGER_OT_ToggleVisibility,
     OBJECT_OT_InstantiateObjects,
+    CUBIO_OT_UpdateAddon,  # Include the update operator here
+    CUBIO_PT_AddonPreferences  # Include the preferences panel here
 )
 
 def register():
     for cls in classes:
         bpy.utils.register_class(cls)
     reg()
-    # Add the color palette and harmony properties to the scene
-    bpy.types.Scene.color_palette = bpy.props.PointerProperty(type=ColorPalette)
-    bpy.types.Scene.color_harmony_props = bpy.props.PointerProperty(type=ColorHarmonyProperties)
-    create_color_previews()
-    print("Registered all classes")
 
 def unregister():
-    # Remove the color palette and harmony properties from the scene
-    del bpy.types.Scene.color_palette
-    del bpy.types.Scene.color_harmony_props
-    remove_color_previews()
     for cls in classes:
         bpy.utils.unregister_class(cls)
     unreg()
-    print("Unregistered all classes")
 
 if __name__ == "__main__":
     register()
